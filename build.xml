@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="YCombo" default="build" basedir=".">
+	
+	<target name="load.properties">
+		<property file="ant.properties" />
+	</target>
+	
+	<target name="init" depends="load.properties,clean">
+		<mkdir dir="${bin.dir}" />
+		<mkdir dir="${build.dir}" />
+	</target>
+	
+	<target name="compile" depends="init">
+		<javac srcdir="${src.dir}" destdir="${bin.dir}" includes="**/*.java" includeantruntime="false" deprecation="off" debug="on">
+			<classpath>
+				<pathelement location="${lib.dir}/yuicompressor-2.4.7.jar"/>
+			</classpath>
+		</javac>
+	</target>
+	
+	<target name="jar" depends="compile">
+		<mkdir dir="${build.dir}/jar"/>
+		<!-- The order is important here. Rhino MUST be unjarred first!
+             (some of our own classes will override the Rhino classes) -->
+        <unjar src="${lib.dir}/yuicompressor-${version.yuicompressor.number}.jar" dest="${build.dir}/jar" />
+		<copy todir="${build.dir}/jar">
+			<fileset dir="${bin.dir}" includes="**/*.class"/>
+		</copy>
+		<jar destfile="${build.dir}/${jar.name}" basedir="${build.dir}/jar">
+			<manifest>
+				<attribute name="Main-Class" value="com.alibaba.f2e.ycombo.App"/>
+			</manifest>
+		</jar>
+		<delete dir="${build.dir}/jar" quiet="true" />
+	</target>
+	
+	<target name="loader" depends="load.properties">
+		<echo file="${build.dir}/ycombo.cmd" message=":: Created by ant, please don't edit manually.&#xD;&#xA;" />
+		<echo file="${build.dir}/ycombo.cmd" message="@java -jar &quot;%~dp0\ycombo-${version.number}.jar&quot; %*&#xD;&#xA;" append="true" />
+		<echo file="${build.dir}/ycombo" message="#!/bin/sh&#xA;" />
+		<echo file="${build.dir}/ycombo" message="java -jar &quot;`dirname &quot;$0&quot;`/ycombo-${version.number}.jar&quot; &quot;$@&quot;&#xA;" append="true" />
+		<echo file="${build.dir}/ycombo" message="ret=$?&#xA;" append="true" />
+		<echo file="${build.dir}/ycombo" message="exit $ret&#xA;" append="true" />
+	</target>
+	
+	<target name="build" depends="jar,loader" />
+	
+	<target name="clean" depends="load.properties">
+		<delete dir="${bin.dir}" quiet="true" />
+		<delete dir="${build.dir}" quiet="true" />
+	</target>
+	
+</project>
